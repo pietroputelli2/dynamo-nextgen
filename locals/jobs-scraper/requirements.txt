@@ -1,6 +1,4 @@
+python-jobspy
 langchain
 langchain-openai
 langchain-community
-exceptiongroup
-PyPDF2
-typing-extensions

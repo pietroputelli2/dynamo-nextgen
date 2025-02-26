@@ -5,7 +5,7 @@ STACK_NAME := DynamoNextGen
 
 LAYER_DIRS := $(wildcard lambda-layers/*)
 
-.PHONY: build-layers clear-layers delete-stack deploy-functions
+.PHONY: build-layers clear-layers delete-stack deploy-functions re-build-layers
 
 build-layers:
 	@for dir in ./lambda-layers/*; do \
@@ -15,16 +15,19 @@ build-layers:
 				--platform manylinux2014_aarch64 \
 				-r "$$dir/requirements.txt" \
 				-t "$$dir/python/lib/python3.9/site-packages" \
+				--python-version 3.9 \
 				--only-binary=:all:; \
 		fi; \
 	done
-	@echo "Built all layers."
+	@echo "✅ Built all layers successfully."
 
 clear-layers:
 	@for dir in $(LAYER_DIRS); do \
 		rm -rf $$dir/python; \
 	done
 	@echo "Cleared all Python dependencies from layers."
+
+re-build-layers: clear-layers build-layers
 
 delete-stack:
 	@read -p "Are you sure you want to delete $(STACK_NAME)? [Y/n]: " confirm; \
