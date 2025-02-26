@@ -24,6 +24,19 @@ Resources:
     Tags:
       Project: DynamoNextGen
 
+  ## Vector Store Layer ##
+
+  VectorStoreLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: VectorStoreLayer
+      Description: Layer for vector store
+      ContentUri: ../lambda-layers/vector-store/
+      CompatibleRuntimes:
+        - python3.9
+      CompatibleArchitectures:
+        - arm64
+
   ## Search Jobs Layer & Function ##
 
   SearchJobsLayer:
@@ -46,6 +59,7 @@ Resources:
       Handler: app.lambda_handler
       Layers:
         - !Ref SearchJobsLayer
+        - !Ref VectorStoreLayer
       Events:
         SearchJobs:
           Type: Api

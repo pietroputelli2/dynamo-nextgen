@@ -10,13 +10,17 @@ LAYER_DIRS := $(wildcard lambda-layers/*)
 build-layers:
 	@for dir in ./lambda-layers/*; do \
 		if [ -d "$$dir" ]; then \
-			echo "Processing $$dir"; \
-			pip3 install \
-				--platform manylinux2014_aarch64 \
-				-r "$$dir/requirements.txt" \
-				-t "$$dir/python/lib/python3.9/site-packages" \
-				--python-version 3.9 \
-				--only-binary=:all:; \
+			if [ -f "$$dir/requirements.txt" ]; then \
+				echo "Processing $$dir"; \
+				pip3 install \
+					--platform manylinux2014_aarch64 \
+					-r "$$dir/requirements.txt" \
+					-t "$$dir/python/lib/python3.9/site-packages" \
+					--python-version 3.9 \
+					--only-binary=:all:; \
+			else \
+				echo "Skipping $$dir (no requirements.txt found)"; \
+			fi \
 		fi; \
 	done
 	@echo "✅ Built all layers successfully."

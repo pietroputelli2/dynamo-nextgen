@@ -5,6 +5,8 @@ from PyPDF2 import PdfReader
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_community.vectorstores import OpenSearchVectorSearch
+from vector_store import core
 
 
 def lambda_handler(event, _):
@@ -27,7 +29,6 @@ def lambda_handler(event, _):
         categories = body["categories"]
 
         resume_summary = summarise_resume(pdf_text)
-        print(resume_summary)
         resume_summary["categories"] = categories
 
         query = format_resume_for_similarity_search(resume_summary)
