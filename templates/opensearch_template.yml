@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS OpenSearch for Semantic Search
+
+Parameters:
+  ApiGatewayName:
+    Type: String
+    Default: dynamo-next-gen-opensearch
+  OpenSearchDomainInstanceType:
+    Type: String
+    Default: m6g.large.search
+
+Resources:
+  OpenSearchDomain:
+    Type: AWS::OpenSearchService::Domain
+    Properties:
+      DomainName: !Ref OpenSearchDomainName
+      EngineVersion: "OpenSearch_2.11"
+      ClusterConfig:
+        InstanceType: !Ref OpenSearchDomainInstanceType
+        InstanceCount: 2
+        ZoneAwarenessEnabled: true
+        ZoneAwarenessConfig:
+          AvailabilityZoneCount: 2
+      EBSOptions:
+        EBSEnabled: true
+        VolumeSize: 50
+        VolumeType: gp3
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+      NodeToNodeEncryptionOptions:
+        Enabled: true
+      EncryptionAtRestOptions:
+        Enabled: true
+      DomainEndpointOptions:
+        EnforceHTTPS: true
+        TLSSecurityPolicy: Policy-Min-TLS-1-2-2019-07
+      AdvancedSecurityOptions:
+        Enabled: true
+        InternalUserDatabaseEnabled: true
+        MasterUserOptions:
+          MasterUserName: "user"
+          MasterUserPassword: "password"
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: "*"
+            Action: "es:ESHttp*"
+            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/dynamo-next-gen-opensearch/*"
+
+Outputs:
+  OpenSearchDomainEndpoint:
+    Value: !Sub "https://${OpenSearchDomain}.${AWS::Region}.es.amazonaws.com"
+    Export:
+      Name: !Sub "${AWS::StackName}-OpenSearchDomainEndpoint"

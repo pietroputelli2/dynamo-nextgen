@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Dynamo Next Gen Functions
+
+Globals:
+  Function:
+    Runtime: python3.9
+    Timeout: 10
+    Architectures:
+      - arm64
+    Environment:
+      Variables:
+        OPENAI_API_KEY: !Sub "{{resolve:secretsmanager:prod/syper:SecretString:OPENAI_API_KEY}}"
+
+Resources:
+  ## API Gateway ##
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      TracingEnabled: true
+      Auth:
+        DefaultAuthorizer: NONE
+    Tags:
+      Project: DynamoNextGen
+
+  ## Search Jobs Layer & Function ##
+
+  SearchJobsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: SearchJobsLayer
+      Description: Layer for search jobs
+      ContentUri: ../lambda-layers/search-jobs/
+      CompatibleRuntimes:
+        - python3.9
+      CompatibleArchitectures:
+        - arm64
+
+  SearchJobsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: dng--SearchJobsFunction
+      Description: Function for search jobs
+      CodeUri: ../functions/search-jobs/
+      Handler: app.lambda_handler
+      Layers:
+        - !Ref SearchJobsLayer
+      Events:
+        SearchJobs:
+          Type: Api
+          Properties:
+            Path: /search-jobs
+            Method: POST
+            RestApiId: !Ref ApiGateway
+    Tags:
+      Project: DynamoNextGen
+
+Outputs:
+  ApiGatewayUrl:
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiGatewayUrl"
