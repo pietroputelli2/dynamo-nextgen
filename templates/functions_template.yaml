@@ -10,7 +10,7 @@ Globals:
       - arm64
     Environment:
       Variables:
-        OPENAI_API_KEY: !Sub "{{resolve:secretsmanager:prod/syper:SecretString:OPENAI_API_KEY}}"
+        OPENAI_API_KEY: !Sub "{{resolve:secretsmanager:prod/DynamoNextGen:SecretString:OPENAI_API_KEY}}"
 
 Resources:
   ## API Gateway ##
@@ -26,16 +26,16 @@ Resources:
 
   ## Vector Store Layer ##
 
-  VectorStoreLayer:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      LayerName: VectorStoreLayer
-      Description: Layer for vector store
-      ContentUri: ../lambda-layers/vector-store/
-      CompatibleRuntimes:
-        - python3.9
-      CompatibleArchitectures:
-        - arm64
+  # VectorStoreLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: VectorStoreLayer
+  #     Description: Layer for vector store
+  #     ContentUri: ../lambda-layers/vector-store/
+  #     CompatibleRuntimes:
+  #       - python3.9
+  #     CompatibleArchitectures:
+  #       - arm64
 
   ## Search Jobs Layer & Function ##
 
@@ -59,7 +59,7 @@ Resources:
       Handler: app.lambda_handler
       Layers:
         - !Ref SearchJobsLayer
-        - !Ref VectorStoreLayer
+        # - !Ref VectorStoreLayer
       Events:
         SearchJobs:
           Type: Api

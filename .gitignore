@@ -5,3 +5,4 @@ functions/*/deployment_pkg.zip
 lambdas/*/package
 lambdas/*/python
 lambdas/*/*.zip
+tests/env.json

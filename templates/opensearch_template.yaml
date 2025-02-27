@@ -2,12 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS OpenSearch for Semantic Search
 
 Parameters:
-  ApiGatewayName:
-    Type: String
-    Default: dynamo-next-gen-opensearch
   OpenSearchDomainInstanceType:
     Type: String
     Default: m6g.large.search
+  OpenSearchDomainName:
+    Type: String
+    Default: dynamo-next-gen-opensearch
 
 Resources:
   OpenSearchDomain:
@@ -39,7 +39,7 @@ Resources:
         InternalUserDatabaseEnabled: true
         MasterUserOptions:
           MasterUserName: "user"
-          MasterUserPassword: "password"
+          MasterUserPassword: "StrongPassword123!"
       AccessPolicies:
         Version: "2012-10-17"
         Statement:
@@ -47,7 +47,7 @@ Resources:
             Principal:
               AWS: "*"
             Action: "es:ESHttp*"
-            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/dynamo-next-gen-opensearch/*"
+            Resource: !Sub "arn:aws:es:${AWS::Region}:${AWS::AccountId}:domain/${OpenSearchDomainName}/*"
 
 Outputs:
   OpenSearchDomainEndpoint:

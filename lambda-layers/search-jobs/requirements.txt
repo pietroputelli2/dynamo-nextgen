@@ -4,3 +4,5 @@ langchain-community
 exceptiongroup
 PyPDF2
 typing-extensions
+opensearch-py
+aiohttp

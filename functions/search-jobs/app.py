@@ -2,11 +2,21 @@ import json
 import base64
 import io
 from PyPDF2 import PdfReader
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
-from langchain_community.vectorstores import OpenSearchVectorSearch
-from vector_store import core
+from opensearchpy import OpenSearch
+import openai
+
+client = openai.OpenAI()
+
+
+def generate_embedding(text):
+    response = client.embeddings.create(
+        input=text,
+        model="text-embedding-ada-002"
+    )
+    return response.data[0].embedding
 
 
 def lambda_handler(event, _):
@@ -33,9 +43,11 @@ def lambda_handler(event, _):
 
         query = format_resume_for_similarity_search(resume_summary)
 
+        documents = similarity_search(query)
+
         return {
             "statusCode": 200,
-            "body": query
+            "body": documents
         }
 
     except Exception as e:
@@ -96,3 +108,86 @@ def format_resume_for_similarity_search(resume):
         for key, value in resume.items()
     ])
     return formatted_resume
+
+
+## OpenSearch Logic ##
+OPENSEARCH_HOST = "search-dynamo-next-gen-opensearch-6ac5oloug2ysx4lqt72mbdvv5e.eu-central-1.es.amazonaws.com"
+OPEN_SEARCH_URL = f"https://{OPENSEARCH_HOST}"
+
+INDEX_NAME = "resume-jobs-data-index"
+
+HTTP_AUTH = ("user", "StrongPassword123!")
+
+MAPPING = {
+    "settings": {
+        "index": {
+            "knn": True
+        }
+    },
+    "mappings": {
+        "properties": {
+            "vector_field": {
+                "type": "knn_vector",
+                "dimension": 1536,
+                "method": {
+                    "name": "hnsw",
+                    "engine": "faiss",
+                    "space_type": "l2",
+                }
+            }
+        }
+    }
+}
+
+
+def get_opensearch_client():
+    client = OpenSearch(
+        hosts=[{"host": OPENSEARCH_HOST, "port": 443}],
+        http_auth=HTTP_AUTH,
+        use_ssl=True,
+        verify_certs=True
+    )
+
+    return client
+
+
+def create_index(client: OpenSearch):
+    if not client.indices.exists(index=INDEX_NAME):
+        client.indices.create(index=INDEX_NAME, body=MAPPING)
+
+
+def similarity_search(query: str, score_threshold: float = 0.7):
+    client = get_opensearch_client()
+    create_index(client)
+
+    embedded_query = generate_embedding(query)
+
+    search_body = {
+        "query": {
+            "knn": {
+                "vector_field": {
+                    "vector": embedded_query,
+                    "k": 8,
+                }
+            }
+        }
+    }
+
+    response = client.search(index=INDEX_NAME, body=search_body)
+    hits = response["hits"]["hits"]
+
+    documents = []
+
+    for hit in hits:
+        if hit["_score"] < score_threshold:
+            continue
+
+        document = {
+            "id": hit["_id"],
+            "score": hit["_score"],
+            "text": hit["_source"]["text"],
+            "metadata": hit["_source"]["metadata"]
+        }
+        documents.append(document)
+
+    return documents

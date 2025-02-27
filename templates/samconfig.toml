@@ -1,6 +1,6 @@
 version = 0.1
 [default.deploy.parameters]
-stack_name = "dynamo-next-gen"
+stack_name = "DynamoNextGen--API"
 resolve_s3 = true
 s3_prefix = "dynamo-next-gen"
 region = "eu-central-1"

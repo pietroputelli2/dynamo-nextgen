@@ -5,7 +5,7 @@ STACK_NAME := DynamoNextGen
 
 LAYER_DIRS := $(wildcard lambda-layers/*)
 
-.PHONY: build-layers clear-layers delete-stack deploy-functions re-build-layers
+.PHONY: build-layers clear-layers delete-stack deploy-functions re-build-layers deploy-opensearch
 
 build-layers:
 	@for dir in ./lambda-layers/*; do \
@@ -42,6 +42,12 @@ delete-stack:
 		echo "Aborted."; \
 	fi
 
-deploy-functions:
+deploy-apis:
 	sam build --template-file templates/functions_template.yaml
 	sam deploy --template-file templates/functions_template.yaml
+
+deploy-opensearch:
+	aws cloudformation deploy \
+		--stack-name $(STACK_NAME)-opensearch \
+		--template-file templates/opensearch_template.yaml \
+		--capabilities CAPABILITY_NAMED_IAM
